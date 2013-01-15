@@ -47,6 +47,7 @@ DEPENDENCIES
  * python-dbus
  * python-gconf
  * python-xdg
+ * python-wnck
 
 To build guake, you will need the following packages too:
  * python-dev
