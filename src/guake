@@ -1311,8 +1311,9 @@ class Guake(SimpleGladeApp):
 
         if kill:
             start_new_thread(self.delete_shell, (pid,))
-
-        if not self.term_list:
+        
+        if not self.boxes_by_workspaces[self.current_workspace]:
+            # No more boxes in current workspace
             self.hide()
             # avoiding the delay on next Guake show request
             self.add_tab()
