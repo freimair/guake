@@ -43,6 +43,7 @@ from time import sleep
 import posix
 from urllib import url2pathname
 from urlparse import urlsplit
+import wnck
 
 import guake.globalhotkeys
 from guake.simplegladeapp import SimpleGladeApp, bindtextdomain
@@ -624,6 +625,10 @@ class Guake(SimpleGladeApp):
         # resizer stuff
         self.resizer.connect('motion-notify-event', self.on_resizer_drag)
 
+        # Workspaces tracking
+        self.screen = wnck.screen_get_default()
+        self.screen.connect( "active-workspace-changed", self.workspace_changed )
+
         # adding the first tab on guake
         self.add_tab()
 
@@ -659,6 +664,14 @@ class Guake(SimpleGladeApp):
                   'press <b>%s</b> to use it.') % label, filename)
             notification.show()
 
+    def workspace_changed(self, screen, previous_workspace):
+        
+        workspace = self.screen.get_active_workspace()
+        
+        w_num = workspace.get_number()
+
+        self.current_workspace = w_num
+        
     def execute_command(self, command, tab=None):
         """Execute the `command' in the `tab'. If tab is None, the
         command will be executed in the currently selected
