@@ -628,7 +628,7 @@ class Guake(SimpleGladeApp):
 
         # Workspaces tracking
         self.boxes_by_workspaces = {}
-        # 0 = hidden, 1 = normal, 2 = fullscreen
+        # 0 = hidden, 1 = shown, 2 = fullscreen hidden, 3 = fullscreen shown
         self.state_by_workspaces = {}
         self.active_by_workspaces = {}
         self.screen = wnck.screen_get_default()
@@ -696,19 +696,19 @@ class Guake(SimpleGladeApp):
                     # Never shown in this workspace
                     self.state_by_workspaces[w_num] = 0
                 new_wp_state = self.state_by_workspaces[w_num]
-                if new_wp_state:
+                if new_wp_state % 2:
                     self.set_active_box(self.active_by_workspaces[w_num])
                     self.show()
-                    if new_wp_state == 1 and self.is_fullscreen:
-                        self.unfullscreen()
-                    elif new_wp_state == 2 and not self.is_fullscreen:
-                        self.fullscreen()
-                    self.set_terminal_focus()
                 else:
                     self.hide()
+                if new_wp_state < 2 and self.is_fullscreen:
+                    self.unfullscreen()
+                elif new_wp_state >= 2 and not self.is_fullscreen:
+                    self.fullscreen()
+                self.set_terminal_focus()
         else:
             # guake just started - so it is invisible
-            self.state_by_workspaces[w_num] = False
+            self.state_by_workspaces[w_num] = 0
 
     def get_active_box(self):
         """Return the currently shown GuakeTerminalBox.
@@ -872,14 +872,18 @@ class Guake(SimpleGladeApp):
         # after the widget is shown.
         self.client.notify(KEY('/style/font/color'))
         self.client.notify(KEY('/style/background/color'))
-        self.state_by_workspaces[self.current_workspace] = True
+        fullscreen = self.state_by_workspaces[self.current_workspace] >= 2
+        state = 1 + fullscreen * 2
+        self.state_by_workspaces[self.current_workspace] = state
 
     def hide(self):
         """Hides the main window of the terminal and sets the visible
         flag to False.
         """
         self.window.hide() # Don't use hide_all here!
-        self.state_by_workspaces[self.current_workspace] = False
+        fullscreen = self.state_by_workspaces[self.current_workspace] >= 2
+        state = fullscreen * 2
+        self.state_by_workspaces[self.current_workspace] = state
 
     def get_final_window_rect(self):
         """Gets the final size of the main window of guake. The height
@@ -1044,7 +1048,8 @@ class Guake(SimpleGladeApp):
     def fullscreen(self):
         self.window.fullscreen()
         self.is_fullscreen = True
-        self.state_by_workspaces[self.current_workspace] = 2
+        if self.state_by_workspaces[self.current_workspace] < 2:
+            self.state_by_workspaces[self.current_workspace] += 2
 
         # The resizer widget really don't need to be shown in
         # fullscreen mode, but tabbar will only be shown if a
@@ -1056,7 +1061,8 @@ class Guake(SimpleGladeApp):
     def unfullscreen(self):
         self.window.unfullscreen()
         self.is_fullscreen = False
-        self.state_by_workspaces[self.current_workspace] = 1
+        if self.state_by_workspaces[self.current_workspace] > 2:
+            self.state_by_workspaces[self.current_workspace] -= 2
 
         # making sure that tabbar and resizer will come back to
         # their default state.
