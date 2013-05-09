@@ -380,6 +380,7 @@ class Guake(SimpleGtkApp):
         x, y, width, height = self.get_final_window_rect()
         self.window.move(x, y)
         self.window.resize(width, height)
+        self.window.set_keep_below(False)
         self.window.show_all()
 
         time = GdkX11.x11_get_server_time(self.window.get_window())
@@ -394,6 +395,7 @@ class Guake(SimpleGtkApp):
         """Hides the main window of the terminal and sets the visible
         flag to False.
         """
+        self.window.set_keep_below(True)
         self.window.iconify()
         self.window.set_property('visible', False)
 
