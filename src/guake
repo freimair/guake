@@ -628,6 +628,7 @@ class Guake(SimpleGladeApp):
 
         # Workspaces tracking
         self.boxes_by_workspaces = {}
+        self.current_workspace = -1
         # 0 = hidden, 1 = shown, 2 = fullscreen hidden, 3 = fullscreen shown
         self.state_by_workspaces = {}
         self.active_by_workspaces = {}
@@ -1201,8 +1202,14 @@ class Guake(SimpleGladeApp):
         """Gets the working directory of the current tab to create a
         new one in the same dir.
         """
-        active_pagepos = self.notebook.get_current_page()
         directory = os.path.expanduser('~')
+        
+        if self.current_workspace not in self.boxes_by_workspaces:
+            # We are starting the first terminal of this workspace - let it
+            # start at ~
+            return directory
+        
+        active_pagepos = self.notebook.get_current_page()        
         if active_pagepos >= 0:
             cwd = os.readlink("/proc/%d/cwd" % self.pid_list[active_pagepos])
             if os.path.exists(cwd):
