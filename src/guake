@@ -679,7 +679,10 @@ class Guake(SimpleGladeApp):
 
         if previous_workspace:
             prev_w_num = previous_workspace.get_number()
-            self.active_by_workspaces[prev_w_num] = self.get_active_box()
+            if self.state_by_workspaces[prev_w_num] % 2:
+                # If instead guake was hidden, the active box will remain the
+                # one remembered when hiding
+                self.active_by_workspaces[prev_w_num] = self.get_active_box()
             if prev_w_num != w_num:
                 # Workspace did change
                 for box, bnt in self.boxes_by_workspaces[prev_w_num]:
@@ -697,7 +700,6 @@ class Guake(SimpleGladeApp):
                     self.state_by_workspaces[w_num] = 0
                 new_wp_state = self.state_by_workspaces[w_num]
                 if new_wp_state % 2:
-                    self.set_active_box(self.active_by_workspaces[w_num])
                     self.show()
                 else:
                     self.hide()
@@ -875,11 +877,18 @@ class Guake(SimpleGladeApp):
         fullscreen = self.state_by_workspaces[self.current_workspace] >= 2
         state = 1 + fullscreen * 2
         self.state_by_workspaces[self.current_workspace] = state
+        if self.current_workspace in self.active_by_workspaces:
+            self.set_active_box(self.active_by_workspaces[self.current_workspace])
 
     def hide(self):
         """Hides the main window of the terminal and sets the visible
         flag to False.
         """
+        if self.state_by_workspaces[self.current_workspace] % 2:
+            # Record the active box only if we are really hiding guake in this
+            # workspace (not if we are just moving to a workspace where guake
+            # is hidden):
+            self.active_by_workspaces[self.current_workspace] = self.get_active_box()
         self.window.hide() # Don't use hide_all here!
         fullscreen = self.state_by_workspaces[self.current_workspace] >= 2
         state = fullscreen * 2
